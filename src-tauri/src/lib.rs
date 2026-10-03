@@ -20,6 +20,7 @@ const BUBBLE_GAP: i32 = 4;
 pub struct SkinInfo {
     pub name: String,
     pub frame: u32,
+    pub smooth: bool,
 }
 
 #[tauri::command]
@@ -69,6 +70,7 @@ fn list_skins_impl(app: &AppHandle) -> Vec<SkinInfo> {
                 SkinInfo {
                     name: name.to_string(),
                     frame: v.get("frame").and_then(|x| x.as_u64()).unwrap_or(24) as u32,
+                    smooth: v.get("smooth").and_then(|x| x.as_bool()).unwrap_or(false),
                 },
             );
         }

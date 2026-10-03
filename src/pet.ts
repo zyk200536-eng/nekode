@@ -13,6 +13,7 @@ export interface PetEvent {
 export interface SkinInfo {
   name: string;
   frame: number;
+  smooth?: boolean;
 }
 
 const FRAME_MS = 150;
@@ -55,6 +56,7 @@ export class Pet {
   private lastFrameAt = 0;
   private art = 16;
   private scaleDevices = 6; // 每个艺术像素占多少物理像素（对齐整数保证锐利）
+  private smooth = false; // 平滑皮肤：高清原图整帧缩放，开启双线性采样
   private ctx: CanvasRenderingContext2D;
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -70,9 +72,9 @@ export class Pet {
       this.canvas.width = backing;
       this.canvas.height = backing;
     }
-    // 每个艺术像素对齐整数个物理像素；放不下时至少 1
-    this.scaleDevices = Math.max(1, Math.floor(backing / this.art));
-    this.ctx.imageSmoothingEnabled = false;
+    // 像素皮肤：每艺术像素对齐整数物理像素；平滑皮肤：整帧铺满 + 双线性
+    this.scaleDevices = this.smooth ? 1 : Math.max(1, Math.floor(backing / this.art));
+    this.ctx.imageSmoothingEnabled = this.smooth;
   }
 
   /** 从皮肤目录加载指定皮肤；失败返回 false（调用方回退到内置素材）。 */
@@ -106,6 +108,7 @@ export class Pet {
     this.sheets = nextSheets;
     this.frameCounts = nextCounts;
     this.art = skin.frame;
+    this.smooth = !!skin.smooth;
     this.setupCanvas();
     this.display = this.oneShot ? this.display : this.persistent();
     this.frame = 0;
@@ -184,7 +187,7 @@ export class Pet {
     const sheet = this.sheets.get(this.display);
     if (!sheet) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    const size = this.art * this.scaleDevices;
+    const size = this.smooth ? this.canvas.width : this.art * this.scaleDevices;
     const off = Math.floor((this.canvas.width - size) / 2);
     this.ctx.drawImage(
       sheet,

@@ -1,4 +1,5 @@
 {
   "name": "neko",
-  "frame": 48
+  "frame": 192,
+  "smooth": true
 }

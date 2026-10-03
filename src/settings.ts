@@ -62,6 +62,7 @@ function renderSkins(skins: SkinInfo[], current: string): void {
     card.title = skin.name;
     const img = document.createElement("img");
     img.alt = skin.name;
+    img.style.imageRendering = skin.smooth ? "auto" : "pixelated";
     invoke<number[] | null>("read_sheet", { skin: skin.name, state: "idle" })
       .then((bytes) => {
         if (bytes && bytes.length) {
