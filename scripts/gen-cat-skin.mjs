@@ -73,7 +73,7 @@ function trim({ mask, W, H, D }) {
   return { mask, W, H, D, box: { minX, minY, maxX, maxY } };
 }
 
-/** 最近邻降采样到 SIZE×SIZE，随后仅保留最大连通域（去水印/碎屑）。 */
+/** 降采样：每格做 alpha 加权块平均 + 颜色量化（28 级/通道），消除点采样的噪点糊感。 */
 function downsample(t) {
   const { mask, W, H, D, box } = t;
   const bw = box.maxX - box.minX + 1;
@@ -84,15 +84,35 @@ function downsample(t) {
   const dh = Math.max(1, Math.round(bh * k));
   const ox = Math.floor((SIZE - dw) / 2);
   const oy = Math.floor((SIZE - dh) / 2);
+  const Q = 28; // 颜色量化步长
 
   const grid = Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => null));
   for (let y = 0; y < dh; y++) {
     for (let x = 0; x < dw; x++) {
-      const sx = box.minX + Math.min(bw - 1, Math.floor((x + 0.5) / k));
-      const sy = box.minY + Math.min(bh - 1, Math.floor((y + 0.5) / k));
-      if (mask[sy * W + sx]) {
-        const i = (sy * W + sx) * 4;
-        grid[oy + y][ox + x] = [D[i], D[i + 1], D[i + 2], 255];
+      // 该格在源图中的足迹
+      const sx0 = box.minX + Math.floor(x / k);
+      const sx1 = box.minX + Math.min(bw - 1, Math.floor((x + 1) / k));
+      const sy0 = box.minY + Math.floor(y / k);
+      const sy1 = box.minY + Math.min(bh - 1, Math.floor((y + 1) / k));
+      let r = 0, g = 0, b = 0, a = 0, n = 0, cov = 0, tot = 0;
+      for (let sy = sy0; sy <= sy1; sy++) {
+        for (let sx = sx0; sx <= sx1; sx++) {
+          tot++;
+          const i = (sy * W + sx) * 4;
+          if (mask[sy * W + sx]) {
+            const w = D[i + 3] / 255;
+            r += D[i] * w;
+            g += D[i + 1] * w;
+            b += D[i + 2] * w;
+            a += w;
+            n++;
+            cov += 255;
+          }
+        }
+      }
+      if (n > 0 && cov / (tot * 255) >= 0.45) {
+        const q = (v) => Math.min(255, Math.round(v / a / Q) * Q);
+        grid[oy + y][ox + x] = [q(r), q(g), q(b), 255];
       }
     }
   }
