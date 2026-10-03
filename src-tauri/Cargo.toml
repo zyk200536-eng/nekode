@@ -1,0 +1,40 @@
+[package]
+name = "nekode"
+version = "0.1.0"
+description = "AI Agent 桌宠：多 Agent 兼容的任务状态桌宠"
+edition = "2021"
+
+[lib]
+name = "nekode_lib"
+crate-type = ["rlib"]
+
+[[bin]]
+name = "nekode"
+path = "src/main.rs"
+
+[[bin]]
+name = "pet-bridge"
+path = "src/bin/pet-bridge.rs"
+
+[[bin]]
+name = "nekode-codex-shim"
+path = "src/bin/nekode-codex-shim.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+percent-encoding = "2"
+home = "0.5"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+codegen-units = 1

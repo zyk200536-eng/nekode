@@ -1,0 +1,161 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+html,
+body {
+  background: transparent;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+#stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#pet {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  cursor: grab;
+}
+#bubble {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 260px;
+  background: #ffffff;
+  color: #2b2b3a;
+  border: 2px solid #2b2b3a;
+  border-radius: 12px;
+  padding: 7px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 3px 0 rgba(43, 43, 58, 0.15);
+  transition: opacity 0.25s;
+  word-break: break-all;
+  z-index: 10;
+}
+#bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top: 6px solid #2b2b3a;
+}
+#bubble.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#bubble-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* 宠物窗：只显示宠物本体 */
+body.win-pet #bubble {
+  display: none;
+}
+/* 气泡窗：只显示气泡（窗口永久点击穿透，不挡桌面） */
+body.win-bubble #pet {
+  display: none;
+}
+/* 设置窗：常规窗口 */
+body.win-settings #stage {
+  display: none;
+}
+body.win-settings {
+  background: #f5f7f6;
+}
+#settings-root.hidden {
+  display: none;
+}
+#settings-root {
+  padding: 18px 20px;
+  height: 100vh;
+  overflow-y: auto;
+  color: #2b2b3a;
+  font-size: 13px;
+}
+#settings-root h1 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+#settings-root h2 {
+  font-size: 12px;
+  margin: 16px 0 8px;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+#skin-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.skin-card {
+  width: 76px;
+  padding: 8px 4px;
+  border: 2px solid #e2e8e6;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.skin-card.active {
+  border-color: #3fbf9f;
+  background: #eefaf6;
+}
+.skin-card img {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+.skin-card span {
+  font-size: 11px;
+  color: #4b5563;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.row input[type="range"] {
+  flex: 1;
+}
+.row code {
+  background: #e8ecea;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+#settings-root button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #2b2b3a;
+}
+#settings-root button:hover {
+  background: #f0fdf9;
+}
+.tip {
+  margin-top: 18px;
+  color: #9ca3af;
+  font-size: 11px;
+}
