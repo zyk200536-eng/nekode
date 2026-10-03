@@ -8,11 +8,13 @@ import { PNG } from "pngjs";
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const outDir = path.join(root, "public", "sprites");
 const iconDir = path.join(root, "src-tauri", "icons");
-// 同步输出一份到皮肤目录，供 skins/agentpet 使用
+// 同步输出到皮肤目录（本地 skins + 安装包内置资源）
 const skinAgentDir = path.join(root, "src-tauri", "target", "release", "skins", "agentpet");
+const skinAgentResDir = path.join(root, "src-tauri", "resources", "skins", "agentpet");
 fs.mkdirSync(outDir, { recursive: true });
 fs.mkdirSync(iconDir, { recursive: true });
 fs.mkdirSync(skinAgentDir, { recursive: true });
+fs.mkdirSync(skinAgentResDir, { recursive: true });
 
 const SIZE = 16;
 
@@ -164,8 +166,10 @@ function writeSheet(name, frames) {
       }
     }
   });
-  fs.writeFileSync(path.join(outDir, `${name}.png`), PNG.sync.write(png));
-  fs.writeFileSync(path.join(skinAgentDir, `${name}.png`), PNG.sync.write(png));
+  const bytes = PNG.sync.write(png);
+  fs.writeFileSync(path.join(outDir, `${name}.png`), bytes);
+  fs.writeFileSync(path.join(skinAgentDir, `${name}.png`), bytes);
+  fs.writeFileSync(path.join(skinAgentResDir, `${name}.png`), bytes);
   console.log(`✓ ${name}.png (${frames.length} 帧)`);
 }
 

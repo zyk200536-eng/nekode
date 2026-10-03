@@ -32,62 +32,75 @@ fn get_state(state: tauri::State<'_, StateInfo>) -> serde_json::Value {
     })
 }
 
-/// exe 同目录的 skins/ 文件夹（用户可自行放入新皮肤）。
-fn skins_dir() -> Option<std::path::PathBuf> {
-    std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.join("skins")))
-}
-
-fn list_skins_impl() -> Vec<SkinInfo> {
-    let mut out = Vec::new();
-    if let Some(dir) = skins_dir() {
-        if let Ok(rd) = std::fs::read_dir(&dir) {
-            for e in rd.flatten() {
-                if !e.path().is_dir() {
-                    continue;
-                }
-                let Ok(txt) = std::fs::read_to_string(e.path().join("manifest.json")) else {
-                    continue;
-                };
-                let Ok(v) = serde_json::from_str::<serde_json::Value>(&txt) else {
-                    continue;
-                };
-                let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("");
-                if name.is_empty() {
-                    continue;
-                }
-                out.push(SkinInfo {
-                    name: name.to_string(),
-                    frame: v.get("frame").and_then(|x| x.as_u64()).unwrap_or(24) as u32,
-                });
-            }
+/// 皮肤搜索目录：本地 skins/（用户自定义/可覆盖官方）优先，其次安装包内置资源。
+fn skin_search_dirs(app: &AppHandle) -> Vec<std::path::PathBuf> {
+    let mut v = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(d) = exe.parent() {
+            v.push(d.join("skins"));
+            v.push(d.join("resources").join("skins"));
         }
     }
-    out.sort_by(|a, b| a.name.cmp(&b.name));
-    out
+    v
+}
+
+fn list_skins_impl(app: &AppHandle) -> Vec<SkinInfo> {
+    let mut by_name = std::collections::BTreeMap::new();
+    for dir in skin_search_dirs(app) {
+        let Ok(rd) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for e in rd.flatten() {
+            if !e.path().is_dir() {
+                continue;
+            }
+            let Ok(txt) = std::fs::read_to_string(e.path().join("manifest.json")) else {
+                continue;
+            };
+            let Ok(v) = serde_json::from_str::<serde_json::Value>(&txt) else {
+                continue;
+            };
+            let name = v.get("name").and_then(|x| x.as_str()).unwrap_or("");
+            if name.is_empty() || by_name.contains_key(name) {
+                continue;
+            }
+            by_name.insert(
+                name.to_string(),
+                SkinInfo {
+                    name: name.to_string(),
+                    frame: v.get("frame").and_then(|x| x.as_u64()).unwrap_or(24) as u32,
+                },
+            );
+        }
+    }
+    by_name.into_values().collect()
 }
 
 #[tauri::command]
-fn list_skins() -> Vec<SkinInfo> {
-    list_skins_impl()
+fn list_skins(app: AppHandle) -> Vec<SkinInfo> {
+    list_skins_impl(&app)
 }
 
 /// 读取某皮肤的某状态精灵图，返回 PNG 字节（前端转 Blob 加载）。
 #[tauri::command]
-fn read_sheet(skin: String, state: String) -> Option<Vec<u8>> {
+fn read_sheet(app: AppHandle, skin: String, state: String) -> Option<Vec<u8>> {
     // 防路径穿越
     if skin.contains("..") || skin.contains('/') || skin.contains('\\') {
         return None;
     }
-    let dir = skins_dir()?.join(skin).join(format!("{state}.png"));
-    std::fs::read(dir).ok()
+    for dir in skin_search_dirs(&app) {
+        let p = dir.join(&skin).join(format!("{state}.png"));
+        if let Ok(data) = std::fs::read(p) {
+            return Some(data);
+        }
+    }
+    None
 }
 
 /// 切换到下一个皮肤并持久化，通知前端重载。
 #[tauri::command]
 fn cycle_skin(app: AppHandle) {
-    let skins = list_skins_impl();
+    let skins = list_skins_impl(&app);
     if skins.is_empty() {
         return;
     }
@@ -119,7 +132,7 @@ fn set_config(app: AppHandle, bubble_seconds: Option<u64>, skin: Option<String>)
     }
     if let Some(sk) = skin {
         if !sk.contains("..") && !sk.contains('/') && !sk.contains('\\') {
-            if let Some(s) = list_skins_impl().into_iter().find(|s| s.name == sk) {
+            if let Some(s) = list_skins_impl(&app).into_iter().find(|s| s.name == sk) {
                 apply_skin(&app, s);
             }
         }
