@@ -203,31 +203,55 @@ export class Pet {
   }
 }
 
-/** 气泡窗：只负责文字气泡。 */
+/** 气泡窗：头顶字幕——透明底，常驻显示最近的工作播报（思考过程），任务结束淡出。 */
 export class Bubble {
   private timer: number | null = null;
   private seconds = 5;
+  private lines: string[] = [];
 
-  constructor(
-    private el: HTMLElement,
-    private text: HTMLElement,
-  ) {}
+  constructor(private el: HTMLElement) {}
 
   setBubbleSeconds(s: number): void {
     if (s > 0) this.seconds = s;
   }
 
-  show(text: string): void {
-    this.text.textContent = text;
+  private render(): void {
+    this.el.innerHTML = "";
+    const visible = this.lines.slice(-3);
+    visible.forEach((text, i) => {
+      const div = document.createElement("div");
+      div.className = "line" + (i < visible.length - 1 ? " dim" : "");
+      div.textContent = text;
+      this.el.append(div);
+    });
     this.el.classList.remove("hidden");
+  }
+
+  private scheduleHide(): void {
     if (this.timer !== null) window.clearTimeout(this.timer);
-    this.timer = window.setTimeout(() => {
-      this.el.classList.add("hidden");
-    }, this.seconds * 1000);
+    this.timer = window.setTimeout(() => this.hide(), this.seconds * 1000);
+  }
+
+  hide(): void {
+    this.lines = [];
+    this.el.classList.add("hidden");
+    if (this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
   }
 
   handleEvent(ev: PetEvent): void {
-    this.show(ev.msg || BUBBLE_DEFAULTS[ev.event] || ev.event);
+    this.lines.push(ev.msg || BUBBLE_DEFAULTS[ev.event] || ev.event);
+    if (this.lines.length > 3) this.lines.shift();
+    this.render();
+    // 干活中/等待中保持常驻（思考过程）；完成/出错后定时淡出
+    if (ev.event === "done" || ev.event === "error") {
+      this.scheduleHide();
+    } else if (this.timer !== null) {
+      window.clearTimeout(this.timer);
+      this.timer = null;
+    }
   }
 
   demo(): void {

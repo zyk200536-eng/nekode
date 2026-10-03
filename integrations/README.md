@@ -166,5 +166,6 @@ Cursor 的 MCP 配置（`~/.cursor/mcp.json`）：
 
 ```text
 执行删除文件、覆盖发布等不可逆操作前，先用 pet_request_approval 工具向桌宠请求授权，得到 approved 再继续；
-遇到多个可选方案时，用 pet_ask 工具让用户在桌宠上点选。
+遇到多个可选方案时，用 pet_ask 工具让用户在桌宠上点选；
+干活过程中随时调用 pet_notify(progress, 一句话) 播报你正在做的事——文字会实时显示在桌宠头顶。
 ```

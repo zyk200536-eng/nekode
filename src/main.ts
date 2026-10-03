@@ -18,10 +18,7 @@ document.body.classList.add(
 );
 
 if (isBubble) {
-  const bubble = new Bubble(
-    document.getElementById("bubble")!,
-    document.getElementById("bubble-text")!,
-  );
+  const bubble = new Bubble(document.getElementById("bubble")!);
   listen<PetEvent>("pet-event", (e) => bubble.handleEvent(e.payload));
   listen("pet-demo", () => bubble.demo());
   invoke<{ bubbleSeconds: number }>("get_state")
