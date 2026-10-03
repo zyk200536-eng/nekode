@@ -65,7 +65,7 @@ curl "http://127.0.0.1:21435/e?agent=test&event=done&msg=hello"
 
 ## 皮肤系统
 
-`skins/<名字>/` 目录 = `manifest.json`（名称 + 帧尺寸）+ 五张状态精灵图（idle/working/waiting/success/error，横向排帧，帧数 = 图宽 ÷ 帧宽）。
+`skins/<名字>/` 目录 = `manifest.json`（名称 + 帧尺寸）+ 五张状态精灵图（idle/working/waiting/success/error，横向排帧，帧数 = 图宽 ÷ 帧宽；manifest 标  即为高清原图直出模式，由渲染器自动选择采样方式）。
 
 - 内置皮肤：Nekode 原创像素团子
 - 把任意 PNG 图标像素化成皮肤的脚本：`node scripts/gen-skins.mjs`（源图放 `design/logos/`）
@@ -74,8 +74,8 @@ curl "http://127.0.0.1:21435/e?agent=test&event=done&msg=hello"
 ## 路线图
 
 - [x] v1：状态动画 + 气泡 + 多 Agent 事件桥 + 皮肤 + 设置面板
-- [ ] v2：点击宠物进行授权操作（配合 Agent 权限请求）
-- [ ] v3：通过宠物与 Agent 对话选择
+- [x] v2：点击宠物授权（MCP 工具 pet_request_approval：批准/拒绝/单击小猫）
+- [x] v3：询问选择交互（MCP 工具 pet_ask：桌宠弹选择题返回选项）
 - [ ] 更多原创皮肤 / 皮肤商店
 
 ## English

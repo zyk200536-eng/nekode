@@ -6,8 +6,15 @@ import { Pet, Bubble, type PetEvent, type SkinInfo } from "./pet";
 
 const isBubble = getCurrentWindow().label === "bubble";
 const isSettings = getCurrentWindow().label === "settings";
+const isPanel = getCurrentWindow().label === "panel";
 document.body.classList.add(
-  isBubble ? "win-bubble" : isSettings ? "win-settings" : "win-pet",
+  isBubble
+    ? "win-bubble"
+    : isSettings
+      ? "win-settings"
+      : isPanel
+        ? "win-panel"
+        : "win-pet",
 );
 
 if (isBubble) {
@@ -23,8 +30,8 @@ if (isBubble) {
   listen<{ bubbleSeconds: number }>("config-changed", (e) =>
     bubble.setBubbleSeconds(e.payload.bubbleSeconds),
   );
-} else if (isSettings) {
-  await import("./settings");
+} else if (isPanel) {
+  await import("./panel");
 } else {
   const canvas = document.getElementById("pet") as HTMLCanvasElement;
   const pet = new Pet(canvas);
@@ -44,11 +51,32 @@ if (isBubble) {
   listen<PetEvent>("pet-event", (e) => pet.handleEvent(e.payload));
   listen("pet-demo", () => pet.demo());
 
+  // v2：有待决授权时，单击小猫 = 批准（此时不触发拖拽）
+  let pendingCount = 0;
+  let downPos: { x: number; y: number } | null = null;
+  listen<{ count: number }>("pet-question", (e) => {
+    pendingCount = e.payload.count;
+  });
+  listen<{ count: number }>("panel-resolved", (e) => {
+    pendingCount = e.payload.count;
+  });
+
   canvas.addEventListener("mousedown", (e) => {
-    if (e.button === 0) {
+    if (e.button !== 0) return;
+    downPos = { x: e.clientX, y: e.clientY };
+    if (pendingCount === 0) {
       getCurrentWindow()
         .startDragging()
         .catch(() => {});
+    }
+  });
+
+  canvas.addEventListener("mouseup", (e) => {
+    if (!downPos) return;
+    const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+    downPos = null;
+    if (moved < 6 && pendingCount > 0) {
+      invoke("click_approve").catch(() => {});
     }
   });
 

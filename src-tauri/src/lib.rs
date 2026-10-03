@@ -1,3 +1,5 @@
+use std::sync::Arc;
+use bridge_server::SharedState;
 mod bridge_server;
 mod config;
 
@@ -202,8 +204,93 @@ fn open_settings(app: AppHandle) {
     .build();
 }
 
+/// 打开交互面板（v2/v3）：首次创建，之后复用；定位于气泡上方。
+pub fn open_panel(app: &AppHandle) {
+    let panel = match app.get_webview_window("panel") {
+        Some(w) => w,
+        None => {
+            let Ok(w) = tauri::webview::WebviewWindowBuilder::new(
+                app,
+                "panel",
+                WebviewUrl::App("index.html".into()),
+            )
+            .title("Nekode")
+            .inner_size(340.0, 320.0)
+            .resizable(false)
+            .decorations(false)
+            .transparent(true)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .shadow(false)
+            .focusable(false)
+            .visible(false)
+            .build() else {
+                return;
+            };
+            w
+        }
+    };
+    position_panel(app, &panel);
+    let _ = panel.show();
+}
+
+fn position_panel(app: &AppHandle, panel: &WebviewWindow) {
+    let Some(pet) = app.get_webview_window("pet") else {
+        return;
+    };
+    let Ok(pos) = pet.outer_position() else {
+        return;
+    };
+    let Ok(scale) = pet.scale_factor() else {
+        return;
+    };
+    let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
+    // 宠物窗 100 逻辑宽；面板 340 逻辑宽，水平居中于宠物，垂直叠在气泡上方
+    let x = logical.x + 50.0 - 170.0;
+    let y = logical.y - 128.0 - 4.0 - 320.0 - 4.0;
+    let _ = panel.set_position(tauri::LogicalPosition::new(x, y));
+}
+
+/// v2：点击宠物 = 批准最早的授权类请求。
+#[tauri::command]
+fn click_approve(app: AppHandle, state: tauri::State<'_, Arc<SharedState>>) -> bool {
+    let target = {
+        let map = state.pending.lock().unwrap();
+        map.values()
+            .filter(|(r, res)| res.is_none() && r.kind == "approval")
+            .map(|(r, _)| r.id.clone())
+            .next()
+    };
+    match target {
+        Some(id) => bridge_server::resolve_impl(&app, &state, &id, "approved"),
+        None => false,
+    }
+}
+
+/// v2/v3：面板点击解决请求。
+#[tauri::command]
+fn resolve_request(
+    app: AppHandle,
+    state: tauri::State<'_, Arc<SharedState>>,
+    id: String,
+    value: String,
+) -> bool {
+    bridge_server::resolve_impl(&app, &state, &id, &value)
+}
+
+/// v2/v3：面板加载时拉取未决请求。
+#[tauri::command]
+fn get_pending(state: tauri::State<'_, Arc<SharedState>>) -> Vec<bridge_server::PendingRequest> {
+    let map = state.pending.lock().unwrap();
+    map.values()
+        .filter(|(_, res)| res.is_none())
+        .map(|(r, _)| r.clone())
+        .collect()
+}
+
 pub fn run() {
     let cfg = config::Config::load();
+    let shared = std::sync::Arc::new(bridge_server::SharedState::default());
     tauri::Builder::default()
         .plugin(single_instance_init(|app, _args, _cwd| {
             show_all(app);
@@ -216,6 +303,7 @@ pub fn run() {
             port: std::sync::Mutex::new(0),
             bubble_seconds: cfg.bubble_seconds,
         })
+        .manage(shared.clone())
         .invoke_handler(tauri::generate_handler![
             get_state,
             show_ctx_menu,
@@ -226,11 +314,14 @@ pub fn run() {
             get_autostart,
             set_autostart,
             reset_position,
-            open_settings
+            open_settings,
+            resolve_request,
+            click_approve,
+            get_pending
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
-            let actual_port = bridge_server::start(handle.clone(), cfg.port);
+            let actual_port = bridge_server::start(handle.clone(), cfg.port, shared.clone());
             *app.state::<StateInfo>().port.lock().unwrap() = actual_port;
             if actual_port != 0 {
                 let _ = handle.emit("bridge-ready", serde_json::json!({ "port": actual_port }));
@@ -245,7 +336,7 @@ pub fn run() {
         .expect("error while running nekode");
 }
 
-/// 气泡窗：永久免鼠标拦截（点击穿透），不抢焦点，拖动宠物时跟随。
+/// 气泡窗：永久免鼠标拦截（点击穿透），不抢焦点，拖动宠物时气泡与面板跟随。
 fn setup_bubble_window(app: &tauri::App) {
     let Some(bubble) = app.get_webview_window("bubble") else {
         return;
@@ -254,12 +345,24 @@ fn setup_bubble_window(app: &tauri::App) {
     let _ = bubble.set_focusable(false);
     if let Some(pet) = app.get_webview_window("pet") {
         let bubble2 = bubble.clone();
+        let handle = app.handle().clone();
+        let pet2 = pet.clone();
         pet.on_window_event(move |event| {
             if let WindowEvent::Moved(pos) = event {
                 let _ = bubble2.set_position(tauri::PhysicalPosition::new(
                     pos.x + BUBBLE_OFFSET_X,
                     pos.y - 124 - BUBBLE_GAP,
                 ));
+                if let Some(panel) = handle.get_webview_window("panel") {
+                    if panel.is_visible().unwrap_or(false) {
+                        let scale = pet2.scale_factor().unwrap_or(1.0);
+                        let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
+                        let _ = panel.set_position(tauri::LogicalPosition::new(
+                            logical.x + 50.0 - 170.0,
+                            logical.y - 128.0 - 4.0 - 320.0 - 4.0,
+                        ));
+                    }
+                }
             }
         });
     }

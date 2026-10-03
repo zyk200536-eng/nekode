@@ -1,6 +1,6 @@
 [package]
 name = "nekode"
-version = "0.1.1"
+version = "0.2.0"
 description = "AI Agent 桌宠：多 Agent 兼容的任务状态桌宠"
 edition = "2021"
 

@@ -154,3 +154,17 @@ Cursor 的 MCP 配置（`~/.cursor/mcp.json`）：
 
 - 钩子给的是状态变化，不是百分比进度条；气泡展示"正在做什么"的一句话摘要。
 - 多个 agent 同时干活时：宠物显示最高优先级状态（等待 > 干活），气泡显示最近一条事件。
+
+## v2/v3：点击授权与选择交互（MCP）
+
+接入 agentpet MCP server 的 agent 额外获得两个双向交互工具：
+
+- `pet_request_approval(message, timeout_seconds)`：桌宠上方弹出授权卡片，用户点「批准/拒绝」，或**直接单击小猫即批准**。返回 `"approved"` / `"denied"` / `"timeout"`。执行删除、发布、支付等不可逆操作前调用。
+- `pet_ask(message, options, timeout_seconds)`：弹出选择题卡片（2-6 个选项），返回用户点选的选项文本。
+
+建议在 agent 的规则文件（`.cursorrules` / `CLAUDE.md` / `AGENTS.md`）中加入：
+
+```text
+执行删除文件、覆盖发布等不可逆操作前，先用 pet_request_approval 工具向桌宠请求授权，得到 approved 再继续；
+遇到多个可选方案时，用 pet_ask 工具让用户在桌宠上点选。
+```

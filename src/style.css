@@ -159,3 +159,63 @@ body.win-settings {
   color: #9ca3af;
   font-size: 11px;
 }
+
+/* 交互面板（v2/v3） */
+body.win-panel #stage {
+  display: none;
+}
+body.win-panel {
+  background: transparent;
+}
+#panel-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#panel-root.hidden {
+  display: none;
+}
+#panel-card {
+  width: 300px;
+  background: #ffffff;
+  border: 2px solid #2b2b3a;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+#panel-head {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+#panel-msg {
+  font-size: 13px;
+  color: #2b2b3a;
+  margin-bottom: 12px;
+  line-height: 1.45;
+  word-break: break-all;
+}
+#panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#panel-actions button {
+  border: 2px solid #2b2b3a;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #2b2b3a;
+}
+#panel-actions button:hover {
+  background: #eefaf6;
+}
+#panel-actions button.primary {
+  background: #3fbf9f;
+  border-color: #3fbf9f;
+  color: #ffffff;
+}
