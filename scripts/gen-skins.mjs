@@ -1,5 +1,5 @@
-// 像素化皮肤生成器：design/logos/*.png → skins/<agent>/（24×24 全状态精灵图）。
-// 流程：最近邻降采样 20×20 → 24×24 画布居中 → 自动描边 → 生成各状态帧。
+// 像素化皮肤生成器：design/logos/*.png → skins/<agent>/（32×32 全状态精灵图）。
+// 流程：裁透明边 → 块平均降采样 28×28 + 颜色量化 → 32×32 画布居中 → 自动描边 → 各状态帧。
 // design/logos 里的商标图片仅限本地自用，不入库不发布（已加 .gitignore）。
 import fs from "node:fs";
 import path from "node:path";
@@ -11,8 +11,9 @@ const logosDir = path.join(root, "design", "logos");
 const skinsDir = path.join(root, "src-tauri", "target", "release", "skins");
 fs.mkdirSync(skinsDir, { recursive: true });
 
-const SIZE = 24; // 画布
-const ART = 20; // logo 有效区域
+const SIZE = 32; // 画布
+const ART = 28; // logo 有效区域
+const Q = 28; // 颜色量化步长
 
 const PAL = {
   o: [82, 51, 40, 255], // 描边
@@ -53,7 +54,7 @@ function trim(src) {
   return out;
 }
 
-/** 最近邻降采样：内容按比例铺满 ART×ART，alpha 阈值 128 保证边缘干净。 */
+/** 降采样：块平均（alpha 加权）+ 颜色量化，消除点采样噪点。 */
 function pixelate(src) {
   const t = trim(src);
   const k = ART / Math.max(t.width, t.height);
@@ -64,11 +65,24 @@ function pixelate(src) {
   const out = Array.from({ length: ART }, () => Array.from({ length: ART }, () => null));
   for (let y = 0; y < dh; y++) {
     for (let x = 0; x < dw; x++) {
-      const sx = Math.min(t.width - 1, Math.floor((x + 0.5) / k));
-      const sy = Math.min(t.height - 1, Math.floor((y + 0.5) / k));
-      const i = (sy * t.width + sx) * 4;
-      if (t.data[i + 3] >= 128) {
-        out[oy + y][ox + x] = [t.data[i], t.data[i + 1], t.data[i + 2], 255];
+      const sx0 = Math.floor(x / k);
+      const sx1 = Math.min(t.width - 1, Math.floor((x + 1) / k));
+      const sy0 = Math.floor(y / k);
+      const sy1 = Math.min(t.height - 1, Math.floor((y + 1) / k));
+      let r = 0, g = 0, b = 0, a = 0;
+      for (let sy = sy0; sy <= sy1; sy++) {
+        for (let sx = sx0; sx <= sx1; sx++) {
+          const i = (sy * t.width + sx) * 4;
+          const w = t.data[i + 3] / 255;
+          r += t.data[i] * w;
+          g += t.data[i + 1] * w;
+          b += t.data[i + 2] * w;
+          a += w;
+        }
+      }
+      if (a > 0) {
+        const q = (v) => Math.min(255, Math.round(v / a / Q) * Q);
+        out[oy + y][ox + x] = [q(r), q(g), q(b), 255];
       }
     }
   }
@@ -143,21 +157,21 @@ function makeFrames(base) {
   return {
     idle: [base, up1],
     working: [
-      overlay(base, STAR, 1, 19),
-      overlay(up1, STAR, 1, 19),
-      overlay(base, STAR, 1, 19),
-      overlay(up1, STAR, 1, 19),
+      overlay(base, STAR, 1, 27),
+      overlay(up1, STAR, 1, 27),
+      overlay(base, STAR, 1, 27),
+      overlay(up1, STAR, 1, 27),
     ],
     waiting: [
-      overlay(base, QUESTION, 1, 18),
-      overlay(base, QUESTION, 1, 18),
+      overlay(base, QUESTION, 1, 26),
+      overlay(base, QUESTION, 1, 26),
       base,
-      overlay(base, QUESTION, 1, 18),
+      overlay(base, QUESTION, 1, 26),
     ],
     success: [
-      dots(up1, [[2, 2], [3, 21]], "g"),
-      dots(up2, [[1, 1], [2, 22], [0, 12]], "g"),
-      dots(up1, [[2, 2], [3, 21]], "g"),
+      dots(up1, [[3, 3], [4, 28]], "g"),
+      dots(up2, [[1, 1], [3, 29], [1, 16]], "g"),
+      dots(up1, [[3, 3], [4, 28]], "g"),
       base,
     ],
     error: [
