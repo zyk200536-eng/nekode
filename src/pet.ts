@@ -54,11 +54,24 @@ export class Pet {
   private frame = 0;
   private lastFrameAt = 0;
   private art = 16;
-  private scale = 6;
+  private scaleDevices = 6; // 每个艺术像素占多少物理像素（对齐整数保证锐利）
   private ctx: CanvasRenderingContext2D;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext("2d")!;
+    this.ctx.imageSmoothingEnabled = false;
+  }
+
+  /** 画布按设备像素渲染，避免 DPI 缩放导致的模糊。 */
+  private setupCanvas(): void {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const backing = Math.round(CANVAS_SIZE * dpr);
+    if (this.canvas.width !== backing) {
+      this.canvas.width = backing;
+      this.canvas.height = backing;
+    }
+    // 每个艺术像素对齐整数个物理像素；放不下时至少 1
+    this.scaleDevices = Math.max(1, Math.floor(backing / this.art));
     this.ctx.imageSmoothingEnabled = false;
   }
 
@@ -93,7 +106,7 @@ export class Pet {
     this.sheets = nextSheets;
     this.frameCounts = nextCounts;
     this.art = skin.frame;
-    this.scale = Math.max(1, Math.floor(CANVAS_SIZE / skin.frame));
+    this.setupCanvas();
     this.display = this.oneShot ? this.display : this.persistent();
     this.frame = 0;
     return true;
@@ -117,7 +130,7 @@ export class Pet {
       ),
     );
     this.art = 16;
-    this.scale = 6;
+    this.setupCanvas();
   }
 
   start(): void {
@@ -171,7 +184,7 @@ export class Pet {
     const sheet = this.sheets.get(this.display);
     if (!sheet) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    const size = this.art * this.scale;
+    const size = this.art * this.scaleDevices;
     const off = Math.floor((this.canvas.width - size) / 2);
     this.ctx.drawImage(
       sheet,
