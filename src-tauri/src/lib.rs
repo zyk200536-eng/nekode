@@ -36,7 +36,7 @@ fn get_state(state: tauri::State<'_, StateInfo>) -> serde_json::Value {
 }
 
 /// 皮肤搜索目录：本地 skins/（用户自定义/可覆盖官方）优先，其次安装包内置资源。
-fn skin_search_dirs(app: &AppHandle) -> Vec<std::path::PathBuf> {
+fn skin_search_dirs(_app: &AppHandle) -> Vec<std::path::PathBuf> {
     let mut v = Vec::new();
     if let Ok(exe) = std::env::current_exe() {
         if let Some(d) = exe.parent() {

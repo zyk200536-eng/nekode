@@ -83,19 +83,44 @@ fn apply_mapping(map: &str, raw: &str, agent: &mut String, event: &mut String, m
                 .into();
             }
             if msg.is_empty() {
-                // 优先提取会话记录里最近一段 assistant 文字（任务过程播报）
-                let transcript = v
-                    .get("transcript_path")
-                    .and_then(|x| x.as_str())
-                    .unwrap_or("");
+                // 任务开头：显示任务内容
                 if hook == "UserPromptSubmit" {
                     let prompt = v.get("prompt").and_then(|x| x.as_str()).unwrap_or("");
                     if !prompt.is_empty() {
                         *msg = truncate(&format!("任务：{prompt}"), 80);
                     }
-                } else if !transcript.is_empty() {
-                    if let Some(text) = last_assistant_text(transcript) {
-                        *msg = truncate(&text, 100);
+                } else {
+                    // 任务过程文字：1) ZCode rollout（按会话 ID 定位）2) Claude 系 transcript 3) 命令行兜底
+                    let session = v
+                        .get("session_id")
+                        .and_then(|x| x.as_str())
+                        .map(|s| s.to_string())
+                        .or_else(|| std::env::var("CLAUDE_SESSION_ID").ok())
+                        .unwrap_or_default();
+                    if !session.is_empty() {
+                        if let Some(home) = home::home_dir() {
+                            let rollout = home
+                                .join(".zcode")
+                                .join("cli")
+                                .join("rollout")
+                                .join(format!("model-io-{session}.jsonl"));
+                            if let Some(text) =
+                                last_rollout_text(rollout.to_string_lossy().as_ref())
+                            {
+                                *msg = truncate(&text, 100);
+                            }
+                        }
+                    }
+                    if msg.is_empty() {
+                        let transcript = v
+                            .get("transcript_path")
+                            .and_then(|x| x.as_str())
+                            .unwrap_or("");
+                        if !transcript.is_empty() {
+                            if let Some(text) = last_assistant_text(transcript) {
+                                *msg = truncate(&text, 100);
+                            }
+                        }
                     }
                 }
                 if msg.is_empty() {
@@ -204,6 +229,43 @@ fn apply_mapping(map: &str, raw: &str, agent: &mut String, event: &mut String, m
         }
         _ => {}
     }
+}
+
+/// 从 ZCode rollout（模型调用日志）尾部提取最近一次响应的文字。
+/// 每行：{"response":{"text":..,"reasoningText":..,...},"request":{..}}，单行可达数百 KB。
+fn last_rollout_text(path: &str) -> Option<String> {
+    let meta = std::fs::metadata(path).ok()?;
+    let size = meta.len() as usize;
+    let read_len = size.min(1024 * 1024);
+    let mut file = std::fs::File::open(path).ok()?;
+    use std::io::{Read, Seek, SeekFrom};
+    file.seek(SeekFrom::Start((size - read_len) as u64)).ok()?;
+    let mut buf = String::new();
+    file.take(read_len as u64).read_to_string(&mut buf).ok()?;
+    if let Some(pos) = buf.find('\n') {
+        buf = buf[pos + 1..].to_string(); // 丢掉可能被截断的首行
+    }
+    for line in buf.lines().rev() {
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(line) else {
+            continue;
+        };
+        let Some(resp) = v.get("response") else {
+            continue;
+        };
+        let text = resp.get("text").and_then(|x| x.as_str()).unwrap_or("").trim();
+        if !text.is_empty() {
+            return Some(text.replace('\n', " ").replace('\r', " "));
+        }
+        let reasoning = resp
+            .get("reasoningText")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .trim();
+        if !reasoning.is_empty() {
+            return Some(reasoning.replace('\n', " ").replace('\r', " "));
+        }
+    }
+    None
 }
 
 fn truncate(s: &str, max_chars: usize) -> String {
