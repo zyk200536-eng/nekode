@@ -27,8 +27,8 @@
       {
         "label": "bubble",
         "title": "agentpet-bubble",
-        "width": 280,
-        "height": 124,
+        "width": 420,
+        "height": 150,
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,

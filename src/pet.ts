@@ -233,7 +233,7 @@ export class Bubble {
       name.textContent = e.task ?? `▸ ${e.agent}`;
       this.el.append(name);
       const proc = document.createElement("div");
-      proc.className = "line";
+      proc.className = "line proc";
       proc.textContent =
         e.state === "done"
           ? `✓ ${e.last}`

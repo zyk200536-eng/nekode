@@ -30,7 +30,7 @@ body {
   bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
-  max-width: 264px;
+  max-width: 400px;
   background: rgba(12, 15, 24, 0.38);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -44,9 +44,20 @@ body {
   z-index: 10;
 }
 #bubble .line {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   word-break: break-all;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+#bubble .line.task {
+  -webkit-line-clamp: 1;
+}
+#bubble .line.proc {
+  -webkit-line-clamp: 2;
+}
+#bubble .line.task:not(:first-child) {
+  margin-top: 8px;
 }
 #bubble .line {
   opacity: 0.85;

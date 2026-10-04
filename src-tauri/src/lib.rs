@@ -174,8 +174,8 @@ fn place_default(pet: &WebviewWindow, bubble: &WebviewWindow) {
     };
     let logical: tauri::LogicalPosition<f64> = tauri::PhysicalPosition::new(x, y).to_logical(scale);
     let _ = bubble.set_position(tauri::LogicalPosition::new(
-        logical.x + 50.0 - 140.0,
-        logical.y - 124.0 - BUBBLE_GAP as f64,
+        logical.x + 50.0 - 210.0,
+        logical.y - 150.0 - BUBBLE_GAP as f64,
     ));
 }
 
@@ -337,14 +337,14 @@ fn setup_bubble_window(app: &tauri::App) {
                 let scale = pet2.scale_factor().unwrap_or(1.0);
                 let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
                 let _ = bubble2.set_position(tauri::LogicalPosition::new(
-                    logical.x + 50.0 - 140.0,
-                    logical.y - 124.0 - BUBBLE_GAP as f64,
+                    logical.x + 50.0 - 210.0,
+                    logical.y - 150.0 - BUBBLE_GAP as f64,
                 ));
                 if let Some(panel) = handle.get_webview_window("panel") {
                     if panel.is_visible().unwrap_or(false) {
                         let _ = panel.set_position(tauri::LogicalPosition::new(
                             logical.x + 50.0 - 170.0,
-                            logical.y - 124.0 - BUBBLE_GAP as f64 - 320.0 - 4.0,
+                            logical.y - 150.0 - BUBBLE_GAP as f64 - 320.0 - 4.0,
                         ));
                     }
                 }
