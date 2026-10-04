@@ -18,6 +18,14 @@ Nekode 是一个桌面宠物程序：它常驻你的屏幕角落，通过各家 
 - 🪄 **自动换肤**：单任务时自动切换成对应 agent 的皮肤，多任务并行保持小猫
 - 🪶 **轻量常驻**：Tauri 构建，安装包 ~1.6MB，后台内存占用几十 MB
 
+## 截图
+
+<p align="center">
+  <img src="docs/shot-working.png" width="300" alt="工作中：任务字幕与自动换肤" />
+  <img src="docs/shot-success.png" width="300" alt="任务完成" />
+  <img src="docs/shot-approve.png" width="300" alt="授权交互面板" />
+</p>
+
 ## 支持的 AI Agent
 
 | Agent | 接入方式 | 难度 |
