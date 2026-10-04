@@ -242,9 +242,12 @@ export class Bubble {
   }
 
   handleEvent(ev: PetEvent): void {
-    this.lines.push(ev.msg || BUBBLE_DEFAULTS[ev.event] || ev.event);
-    if (this.lines.length > 3) this.lines.shift();
-    this.render();
+    // 只显示具体命令/动作（有 msg 才上屏），"开工啦"等过程填充语不显示
+    if (ev.msg) {
+      this.lines.push(ev.msg);
+      if (this.lines.length > 3) this.lines.shift();
+    }
+    if (this.lines.length) this.render();
     // 干活中/等待中保持常驻（思考过程）；完成/出错后定时淡出
     if (ev.event === "done" || ev.event === "error") {
       this.scheduleHide();

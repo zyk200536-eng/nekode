@@ -83,29 +83,49 @@ fn apply_mapping(map: &str, raw: &str, agent: &mut String, event: &mut String, m
                 .into();
             }
             if msg.is_empty() {
-                let tool = v.get("tool_name").and_then(|x| x.as_str()).unwrap_or("");
-                let input = &v["tool_input"];
-                let detail = ["file_path", "path", "command", "pattern", "url", "query"]
+                // 优先提取会话记录里最近一段 assistant 文字（任务过程播报）
+                let transcript = v
+                    .get("transcript_path")
+                    .and_then(|x| x.as_str())
+                    .unwrap_or("");
+                if hook == "UserPromptSubmit" {
+                    let prompt = v.get("prompt").and_then(|x| x.as_str()).unwrap_or("");
+                    if !prompt.is_empty() {
+                        *msg = truncate(&format!("任务：{prompt}"), 80);
+                    }
+                } else if !transcript.is_empty() {
+                    if let Some(text) = last_assistant_text(transcript) {
+                        *msg = truncate(&text, 100);
+                    }
+                }
+                if msg.is_empty() {
+                    let tool = v.get("tool_name").and_then(|x| x.as_str()).unwrap_or("");
+                    let input = &v["tool_input"];
+                    let detail = [
+                        "file_path", "path", "command", "pattern", "url", "query", "prompt",
+                        "description",
+                    ]
                     .iter()
                     .find_map(|k| input.get(k).and_then(|x| x.as_str()))
                     .or_else(|| v.get("message").and_then(|x| x.as_str()))
                     .unwrap_or("");
-                let text = if hook == "Notification" {
-                    v.get("message")
-                        .and_then(|x| x.as_str())
-                        .unwrap_or("需要你的注意")
-                        .to_string()
-                } else if !tool.is_empty() && !detail.is_empty() {
-                    let base = std::path::Path::new(detail)
-                        .file_name()
-                        .map(|s| s.to_string_lossy().into_owned())
-                        .unwrap_or_else(|| detail.to_string());
-                    format!("{tool} {base}")
-                } else {
-                    String::new()
-                };
-                if !text.is_empty() {
-                    *msg = truncate(&text, 120);
+                    let text = if hook == "Notification" || hook == "PermissionRequest" {
+                        v.get("message")
+                            .and_then(|x| x.as_str())
+                            .unwrap_or("需要你的注意")
+                            .to_string()
+                    } else if !tool.is_empty() && !detail.is_empty() {
+                        let base = std::path::Path::new(detail)
+                            .file_name()
+                            .map(|s| s.to_string_lossy().into_owned())
+                            .unwrap_or_else(|| detail.to_string());
+                        format!("{tool} {base}")
+                    } else {
+                        String::new()
+                    };
+                    if !text.is_empty() {
+                        *msg = truncate(&text, 120);
+                    }
                 }
             }
         }
@@ -193,6 +213,52 @@ fn truncate(s: &str, max_chars: usize) -> String {
         let t: String = s.chars().take(max_chars).collect();
         format!("{t}…")
     }
+}
+
+/// 从会话 JSONL 记录尾部提取最近一段 assistant 文字（任务过程播报）。
+/// 兼容 Claude Code 系 transcript 结构：{"type":"assistant","message":{"content":[{"type":"text","text":..}]}}
+/// 任何解析失败都返回 None，静默回退。
+fn last_assistant_text(path: &str) -> Option<String> {
+    let meta = std::fs::metadata(path).ok()?;
+    let size = meta.len() as usize;
+    let read_len = size.min(256 * 1024);
+    let mut file = std::fs::File::open(path).ok()?;
+    use std::io::{Read, Seek, SeekFrom};
+    file.seek(SeekFrom::Start((size - read_len) as u64)).ok()?;
+    let mut buf = String::new();
+    file.take(read_len as u64).read_to_string(&mut buf).ok()?;
+    // 丢掉首行（可能被截断）
+    if let Some(pos) = buf.find('\n') {
+        buf = buf[pos + 1..].to_string();
+    }
+    for line in buf.lines().rev() {
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(line) else {
+            continue;
+        };
+        let kind = v.get("type").and_then(|x| x.as_str()).unwrap_or("");
+        if kind != "assistant" {
+            continue;
+        }
+        let content = v
+            .get("message")
+            .and_then(|m| m.get("content"))
+            .or_else(|| v.get("content"));
+        let Some(items) = content.and_then(|c| c.as_array()) else {
+            continue;
+        };
+        // 取最后一个非空 text 块
+        for item in items.iter().rev() {
+            if item.get("type").and_then(|x| x.as_str()) == Some("text") {
+                let text = item.get("text").and_then(|x| x.as_str()).unwrap_or("").trim();
+                if !text.is_empty() {
+                    // 压成单行，避免字幕里出现换行
+                    let one_line = text.replace('\n', " ").replace('\r', " ");
+                    return Some(one_line);
+                }
+            }
+        }
+    }
+    None
 }
 
 /// 用 GET 请求转发事件（URL 编码避开一切 shell 转义问题）。
