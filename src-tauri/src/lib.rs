@@ -15,7 +15,7 @@ pub struct StateInfo {
 }
 
 /// 气泡窗尺寸（物理像素偏移用）
-const BUBBLE_OFFSET_X: i32 = -90; // 280 宽气泡窗在 100 宽宠物窗上方水平居中
+
 const BUBBLE_GAP: i32 = 20; // 字幕窗与宠物的间距
 
 #[derive(Clone, serde::Serialize)]
@@ -168,9 +168,14 @@ fn place_default(pet: &WebviewWindow, bubble: &WebviewWindow) {
     let x = ms.width as i32 - ws.width as i32 - 24;
     let y = ms.height as i32 - ws.height as i32 - 90;
     let _ = pet.set_position(tauri::PhysicalPosition::new(x, y));
-    let _ = bubble.set_position(tauri::PhysicalPosition::new(
-        x + BUBBLE_OFFSET_X,
-        y - 124 - BUBBLE_GAP,
+    // 气泡定位用逻辑坐标（窗口高度随 DPI 缩放，物理偏移会造成重叠）
+    let Ok(scale) = pet.scale_factor() else {
+        return;
+    };
+    let logical: tauri::LogicalPosition<f64> = tauri::PhysicalPosition::new(x, y).to_logical(scale);
+    let _ = bubble.set_position(tauri::LogicalPosition::new(
+        logical.x + 50.0 - 140.0,
+        logical.y - 124.0 - BUBBLE_GAP as f64,
     ));
 }
 
@@ -329,17 +334,17 @@ fn setup_bubble_window(app: &tauri::App) {
         let pet2 = pet.clone();
         pet.on_window_event(move |event| {
             if let WindowEvent::Moved(pos) = event {
-                let _ = bubble2.set_position(tauri::PhysicalPosition::new(
-                    pos.x + BUBBLE_OFFSET_X,
-                    pos.y - 124 - BUBBLE_GAP,
+                let scale = pet2.scale_factor().unwrap_or(1.0);
+                let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
+                let _ = bubble2.set_position(tauri::LogicalPosition::new(
+                    logical.x + 50.0 - 140.0,
+                    logical.y - 124.0 - BUBBLE_GAP as f64,
                 ));
                 if let Some(panel) = handle.get_webview_window("panel") {
                     if panel.is_visible().unwrap_or(false) {
-                        let scale = pet2.scale_factor().unwrap_or(1.0);
-                        let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
                         let _ = panel.set_position(tauri::LogicalPosition::new(
                             logical.x + 50.0 - 170.0,
-                            logical.y - 124.0 - 20.0 - 320.0 - 4.0,
+                            logical.y - 124.0 - BUBBLE_GAP as f64 - 320.0 - 4.0,
                         ));
                     }
                 }

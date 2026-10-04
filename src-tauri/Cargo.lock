@@ -2133,7 +2133,7 @@ dependencies = [
 
 [[package]]
 name = "nekode"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "home",
  "percent-encoding",

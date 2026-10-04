@@ -169,3 +169,13 @@ Cursor 的 MCP 配置（`~/.cursor/mcp.json`）：
 遇到多个可选方案时，用 pet_ask 工具让用户在桌宠上点选；
 干活过程中随时调用 pet_notify(progress, 一句话) 播报你正在做的事——文字会实时显示在桌宠头顶。
 ```
+
+### 6. DeepSeek Harness（DSH）
+
+DSH 采用"一切皆插件"的 hooks 机制（生命周期事件 + shell 命令插件，任务开始/工具调用前后/任务结束等节点可挂 shell 命令）。在其钩子/插件配置中，把生命周期事件指向 pet-bridge：
+
+```text
+<PET_DIR>/pet-bridge.exe --map claude --agent dsh
+```
+
+> ⚠️ DSH 钩子配置的确切 YAML/JSON 格式以 `deepseek-ai/deepseek-harness` 官方文档为准。如果你已配好一条钩子，把它的真实配置/数据样例发给维护者即可快速校准字段映射（当前按 Claude 系结构尽力解析）。

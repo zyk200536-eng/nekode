@@ -83,6 +83,7 @@ export class Pet {
     if (!skins.length) return false;
     const skin =
       skins.find((s) => s.name === name) ??
+      skins.find((s) => s.name === "neko") ??
       skins.find((s) => s.name === "agentpet") ??
       skins[0];
     const nextSheets = new Map<PetState, HTMLImageElement>();

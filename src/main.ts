@@ -40,12 +40,39 @@ if (isBubble) {
     pet.start();
   })();
 
+  // 自动换肤：单任务时切换成对应 agent 的皮肤；多任务/空闲时用小猫
+  const agentActivity = new Map<string, { state: PetEvent["event"]; ts: number }>();
+  let currentSkin = "neko";
+  const ACTIVE_STATES = new Set(["start", "progress", "waiting"]);
+
+  listen<PetEvent>("pet-event", (e) => {
+    pet.handleEvent(e.payload);
+    const now = Date.now();
+    agentActivity.set(e.payload.agent, { state: e.payload.event, ts: now });
+    for (const [k, v] of [...agentActivity]) {
+      if (now - v.ts > 10 * 60 * 1000) agentActivity.delete(k);
+    }
+    const active = [...agentActivity.entries()].filter(([, v]) => ACTIVE_STATES.has(v.state));
+    const desired = active.length === 1 ? active[0][0] : "neko";
+    if (desired !== currentSkin) {
+      currentSkin = desired;
+      pet
+        .loadSkin(desired)
+        .then((ok) => {
+          if (!ok) {
+            currentSkin = "neko";
+            return pet.loadSkin("neko");
+          }
+          return undefined;
+        })
+        .catch(() => {});
+    }
+  });
   listen<SkinInfo>("skin-changed", async (e) => {
+    currentSkin = e.payload.name;
     const ok = await pet.loadSkin(e.payload.name);
     if (!ok) await pet.loadBundled();
   });
-
-  listen<PetEvent>("pet-event", (e) => pet.handleEvent(e.payload));
   listen("pet-demo", () => pet.demo());
 
   // v2：有待决授权时，单击小猫 = 批准（此时不触发拖拽）
