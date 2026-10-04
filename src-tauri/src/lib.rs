@@ -204,31 +204,11 @@ fn open_settings(app: AppHandle) {
     .build();
 }
 
-/// 打开交互面板（v2/v3）：首次创建，之后复用；定位于气泡上方。
+/// 打开交互面板（v2/v3）：面板窗口在启动时已预建（主线程创建，避免后台线程建窗
+/// 导致 webview 加载失败显示"localhost 拒绝连接"），这里只定位并显示。
 pub fn open_panel(app: &AppHandle) {
-    let panel = match app.get_webview_window("panel") {
-        Some(w) => w,
-        None => {
-            let Ok(w) = tauri::webview::WebviewWindowBuilder::new(
-                app,
-                "panel",
-                WebviewUrl::App("index.html".into()),
-            )
-            .title("Nekode")
-            .inner_size(340.0, 320.0)
-            .resizable(false)
-            .decorations(false)
-            .transparent(true)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .shadow(false)
-            .focusable(false)
-            .visible(false)
-            .build() else {
-                return;
-            };
-            w
-        }
+    let Some(panel) = app.get_webview_window("panel") else {
+        return;
     };
     position_panel(app, &panel);
     let _ = panel.show();
