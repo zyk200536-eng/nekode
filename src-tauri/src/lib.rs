@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use bridge_server::SharedState;
 mod bridge_server;
+mod dsh_watcher;
 mod config;
 
 use tauri::menu::{Menu, MenuItem};
@@ -311,6 +312,7 @@ pub fn run() {
             if actual_port != 0 {
                 let _ = handle.emit("bridge-ready", serde_json::json!({ "port": actual_port }));
             }
+            dsh_watcher::start(app.handle().clone());
             setup_bubble_window(app);
             register_ctx_menu_handler(app);
             build_tray(app)?;

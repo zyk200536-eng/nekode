@@ -34,6 +34,7 @@ Nekode 是一个桌面宠物程序：它常驻你的屏幕角落，通过各家 
 | Codex CLI / 桌面版 | notify 配置（含转发器，不覆盖原通知） | ⭐⭐ |
 | Hermes Agent | config.yaml 钩子块 | ⭐ |
 | Cursor 等无钩子 Agent | MCP 工具软接入 | ⭐⭐ |
+| DeepSeek Harness | 会话记录自动监视，零配置 | ⭐ 自动 |
 
 各 Agent 的完整接入配置见 **[integrations/README.md](integrations/README.md)**。
 

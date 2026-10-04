@@ -1,6 +1,6 @@
 [package]
 name = "nekode"
-version = "0.2.6"
+version = "0.3.0"
 description = "AI Agent 桌宠：多 Agent 兼容的任务状态桌宠"
 edition = "2021"
 
@@ -32,6 +32,7 @@ serde_json = "1"
 tiny_http = "0.12"
 percent-encoding = "2"
 home = "0.5"
+zstd = "0.13"
 
 [profile.release]
 opt-level = "s"
