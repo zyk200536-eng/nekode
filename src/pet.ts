@@ -203,11 +203,19 @@ export class Pet {
   }
 }
 
-/** 气泡窗：头顶字幕——透明底，常驻显示最近的工作播报（思考过程），任务结束淡出。 */
+interface TaskEntry {
+  agent: string;
+  task: string | null; // 任务名（来自任务提交时的内容）
+  last: string; // 最新过程文字
+  state: PetEventType;
+  ts: number;
+}
+
+/** 气泡窗：头顶字幕——按任务分组（任务名 + 最新过程），全部完成后淡出。 */
 export class Bubble {
   private timer: number | null = null;
   private seconds = 5;
-  private lines: string[] = [];
+  private tasks = new Map<string, TaskEntry>();
 
   constructor(private el: HTMLElement) {}
 
@@ -217,13 +225,26 @@ export class Bubble {
 
   private render(): void {
     this.el.innerHTML = "";
-    const visible = this.lines.slice(-3);
-    visible.forEach((text, i) => {
-      const div = document.createElement("div");
-      div.className = "line" + (i < visible.length - 1 ? " dim" : "");
-      div.textContent = text;
-      this.el.append(div);
-    });
+    const entries = [...this.tasks.values()].sort((a, b) => b.ts - a.ts).slice(0, 2);
+    for (const e of entries) {
+      const name = document.createElement("div");
+      name.className = "line task";
+      name.textContent = e.task ?? `▸ ${e.agent}`;
+      this.el.append(name);
+      const proc = document.createElement("div");
+      proc.className = "line";
+      proc.textContent =
+        e.state === "done"
+          ? `✓ ${e.last}`
+          : e.state === "error"
+            ? `✗ ${e.last}`
+            : e.last;
+      this.el.append(proc);
+    }
+    if (this.tasks.size === 0) {
+      this.el.classList.add("hidden");
+      return;
+    }
     this.el.classList.remove("hidden");
   }
 
@@ -233,7 +254,7 @@ export class Bubble {
   }
 
   hide(): void {
-    this.lines = [];
+    this.tasks.clear();
     this.el.classList.add("hidden");
     if (this.timer !== null) {
       window.clearTimeout(this.timer);
@@ -242,14 +263,28 @@ export class Bubble {
   }
 
   handleEvent(ev: PetEvent): void {
-    // 只显示具体命令/动作（有 msg 才上屏），"开工啦"等过程填充语不显示
-    if (ev.msg) {
-      this.lines.push(ev.msg);
-      if (this.lines.length > 3) this.lines.shift();
+    const entry = this.tasks.get(ev.agent) ?? {
+      agent: ev.agent,
+      task: null,
+      last: "",
+      state: "start" as PetEventType,
+      ts: 0,
+    };
+    if (ev.event === "start" && ev.msg) entry.task = ev.msg; // 任务名来自提交的任务内容
+    entry.last = ev.msg || BUBBLE_DEFAULTS[ev.event] || ev.event;
+    entry.state = ev.event;
+    entry.ts = Date.now();
+    this.tasks.set(ev.agent, entry);
+    if (this.tasks.size > 4) {
+      const oldest = [...this.tasks.entries()].sort((a, b) => a[1].ts - b[1].ts)[0][0];
+      this.tasks.delete(oldest);
     }
-    if (this.lines.length) this.render();
-    // 干活中/等待中保持常驻（思考过程）；完成/出错后定时淡出
-    if (ev.event === "done" || ev.event === "error") {
+    this.render();
+    // 全部任务完成/出错才整体淡出；仍有任务在跑则保持常驻
+    const allSettled = [...this.tasks.values()].every(
+      (e) => e.state === "done" || e.state === "error",
+    );
+    if (allSettled) {
       this.scheduleHide();
     } else if (this.timer !== null) {
       window.clearTimeout(this.timer);

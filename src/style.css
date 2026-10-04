@@ -48,8 +48,12 @@ body {
   word-break: break-all;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
-#bubble .line.dim {
-  opacity: 0.55;
+#bubble .line {
+  opacity: 0.85;
+}
+#bubble .line.task {
+  opacity: 1;
+  font-weight: 600;
 }
 #bubble.hidden {
   opacity: 0;

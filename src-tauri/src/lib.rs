@@ -16,7 +16,7 @@ pub struct StateInfo {
 
 /// 气泡窗尺寸（物理像素偏移用）
 const BUBBLE_OFFSET_X: i32 = -90; // 280 宽气泡窗在 100 宽宠物窗上方水平居中
-const BUBBLE_GAP: i32 = 12;
+const BUBBLE_GAP: i32 = 20; // 字幕窗与宠物的间距
 
 #[derive(Clone, serde::Serialize)]
 pub struct SkinInfo {
@@ -227,7 +227,7 @@ fn position_panel(app: &AppHandle, panel: &WebviewWindow) {
     let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
     // 宠物窗 100 逻辑宽；面板 340 逻辑宽，水平居中于宠物，垂直叠在气泡上方
     let x = logical.x + 50.0 - 170.0;
-    let y = logical.y - 124.0 - 12.0 - 320.0 - 4.0;
+    let y = logical.y - 124.0 - 20.0 - 320.0 - 4.0;
     let _ = panel.set_position(tauri::LogicalPosition::new(x, y));
 }
 
@@ -339,7 +339,7 @@ fn setup_bubble_window(app: &tauri::App) {
                         let logical: tauri::LogicalPosition<f64> = pos.to_logical(scale);
                         let _ = panel.set_position(tauri::LogicalPosition::new(
                             logical.x + 50.0 - 170.0,
-                            logical.y - 124.0 - 12.0 - 320.0 - 4.0,
+                            logical.y - 124.0 - 20.0 - 320.0 - 4.0,
                         ));
                     }
                 }
