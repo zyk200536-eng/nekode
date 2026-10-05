@@ -127,7 +127,6 @@ fn watch_file(app: &tauri::AppHandle, file: &PathBuf) {
 type RawEvent = (u64, Value);
 
 fn decompress_and_parse(file: &PathBuf) -> Result<Vec<RawEvent>, String> {
-    use std::io::Read;
     let bytes = std::fs::read(file).map_err(|e| e.to_string())?;
     let out_bytes = zstd::stream::decode_all(bytes.as_slice())
         .map_err(|e| format!("zstd decode: {e}"))?;
