@@ -40,6 +40,19 @@ jobs:
       - name: Generate bundled assets
         run: node scripts/gen-art.mjs
 
+      # macOS universal：tauri CLI 只对主程序做 lipo，辅助二进制需手动合并
+      - name: Build extra bins (universal)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          cargo build --release --target aarch64-apple-darwin --bins
+          cargo build --release --target x86_64-apple-darwin --bins
+          mkdir -p src-tauri/target/universal-apple-darwin/release
+          for bin in pet-bridge nekode-codex-shim; do
+            lipo -create -output "src-tauri/target/universal-apple-darwin/release/$bin" \
+              "src-tauri/target/aarch64-apple-darwin/release/$bin" \
+              "src-tauri/target/x86_64-apple-darwin/release/$bin"
+          done
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
