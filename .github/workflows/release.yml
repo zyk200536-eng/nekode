@@ -43,14 +43,15 @@ jobs:
       # macOS universal：tauri CLI 只对主程序做 lipo，辅助二进制需手动合并
       - name: Build extra bins (universal)
         if: matrix.platform == 'macos-latest'
+        working-directory: src-tauri
         run: |
           cargo build --release --target aarch64-apple-darwin --bins
           cargo build --release --target x86_64-apple-darwin --bins
-          mkdir -p src-tauri/target/universal-apple-darwin/release
+          mkdir -p target/universal-apple-darwin/release
           for bin in pet-bridge nekode-codex-shim; do
-            lipo -create -output "src-tauri/target/universal-apple-darwin/release/$bin" \
-              "src-tauri/target/aarch64-apple-darwin/release/$bin" \
-              "src-tauri/target/x86_64-apple-darwin/release/$bin"
+            lipo -create -output "target/universal-apple-darwin/release/$bin" \
+              "target/aarch64-apple-darwin/release/$bin" \
+              "target/x86_64-apple-darwin/release/$bin"
           done
 
       - uses: tauri-apps/tauri-action@v0
