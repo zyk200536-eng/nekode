@@ -6,15 +6,18 @@ import { Pet, Bubble, type PetEvent, type SkinInfo } from "./pet";
 
 const isBubble = getCurrentWindow().label === "bubble";
 const isSettings = getCurrentWindow().label === "settings";
+const isWizard = getCurrentWindow().label === "wizard";
 const isPanel = getCurrentWindow().label === "panel";
 document.body.classList.add(
   isBubble
     ? "win-bubble"
     : isSettings
       ? "win-settings"
-      : isPanel
-        ? "win-panel"
-        : "win-pet",
+      : isWizard
+        ? "win-wizard"
+        : isPanel
+          ? "win-panel"
+          : "win-pet",
 );
 
 if (isBubble) {
@@ -29,6 +32,10 @@ if (isBubble) {
   );
 } else if (isPanel) {
   await import("./panel");
+} else if (isSettings) {
+  await import("./settings");
+} else if (isWizard) {
+  await import("./wizard");
 } else {
   const canvas = document.getElementById("pet") as HTMLCanvasElement;
   const pet = new Pet(canvas);

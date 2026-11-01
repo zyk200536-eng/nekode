@@ -43,6 +43,10 @@ root.innerHTML = `
       <span>宠物位置</span>
       <button id="reset-pos">重置到屏幕右下角</button>
     </div>
+    <div class="row">
+      <span>Agent 接入</span>
+      <button id="open-wizard">打开接入向导…</button>
+    </div>
   </section>
 
   <p class="tip">接入各 AI Agent 的配置说明见项目 integrations/README.md</p>
@@ -118,6 +122,10 @@ root.querySelector("#copy-test")?.addEventListener("click", (e) => {
 
 root.querySelector("#reset-pos")?.addEventListener("click", () => {
   invoke("reset_position").catch(() => {});
+});
+
+root.querySelector("#open-wizard")?.addEventListener("click", () => {
+  invoke("open_wizard").catch(() => {});
 });
 
 listen<SkinInfo>("skin-changed", async (e) => {

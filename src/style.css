@@ -227,3 +227,150 @@ body.win-panel {
   border-color: #3fbf9f;
   color: #ffffff;
 }
+
+/* 接入向导 */
+body.win-wizard #stage {
+  display: none;
+}
+body.win-wizard {
+  background: #f5f7f6;
+}
+#wizard-root.hidden {
+  display: none;
+}
+#wizard-root {
+  padding: 18px 20px;
+  height: 100vh;
+  overflow-y: auto;
+  color: #2b2b3a;
+  font-size: 13px;
+}
+#wizard-root h1 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+#wizard-root .sub {
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+#wizard-root h2 {
+  font-size: 12px;
+  margin: 14px 0 6px;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.agent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8e6;
+  border-radius: 10px;
+  background: #ffffff;
+  margin-bottom: 8px;
+}
+.agent-info {
+  flex: 1;
+  min-width: 0;
+}
+.agent-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.agent-head b {
+  font-size: 13px;
+}
+.badge {
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 1px 7px;
+}
+.badge.ok {
+  background: #eefaf6;
+  color: #1d8f74;
+}
+.badge.warn {
+  background: #fdf3e4;
+  color: #b0700f;
+}
+.badge.dim {
+  background: #eef0ef;
+  color: #9ca3af;
+}
+.agent-row .path {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+  word-break: break-all;
+}
+.warn-text {
+  font-size: 11px;
+  color: #b0700f;
+  margin-top: 2px;
+}
+.note-text {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+.agent-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+#wizard-root button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #2b2b3a;
+}
+#wizard-root button:hover {
+  background: #f0fdf9;
+}
+#wizard-root button.primary {
+  background: #3fbf9f;
+  border-color: #3fbf9f;
+  color: #ffffff;
+}
+#wizard-root button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+#wizard-msg {
+  color: #c0392b;
+  font-size: 12px;
+  min-height: 16px;
+  margin: 4px 0;
+}
+#wizard-root .tipbox {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+}
+#wizard-root .tipbox p {
+  font-size: 12px;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+#wizard-root #rule-text {
+  background: #e8ecea;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  margin-bottom: 8px;
+}
+.btnrow {
+  display: flex;
+  gap: 8px;
+}

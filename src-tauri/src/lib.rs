@@ -3,6 +3,7 @@ use bridge_server::SharedState;
 mod bridge_server;
 mod dsh_watcher;
 mod config;
+mod wizard;
 
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -210,6 +211,43 @@ fn open_settings(app: AppHandle) {
     .build();
 }
 
+/// 打开一键接入向导（照抄 open_settings 的运行时建窗模式）。
+#[tauri::command]
+fn open_wizard(app: AppHandle) {
+    if let Some(w) = app.get_webview_window("wizard") {
+        let _ = w.show();
+        let _ = w.set_focus();
+        return;
+    }
+    let _ = tauri::webview::WebviewWindowBuilder::new(
+        &app,
+        "wizard",
+        WebviewUrl::App("index.html".into()),
+    )
+    .title("Nekode 接入向导")
+    .inner_size(520.0, 660.0)
+    .resizable(false)
+    .center()
+    .build();
+}
+
+// ---------- 一键接入向导 ----------
+
+#[tauri::command]
+fn wizard_scan() -> Vec<wizard::AgentStatus> {
+    wizard::scan_impl()
+}
+
+#[tauri::command]
+fn wizard_integrate(app: AppHandle, id: String) -> Result<wizard::AgentStatus, String> {
+    wizard::integrate_impl(&app, &id)
+}
+
+#[tauri::command]
+fn wizard_restore(app: AppHandle, id: String) -> Result<wizard::AgentStatus, String> {
+    wizard::restore_impl(&app, &id)
+}
+
 /// 打开交互面板（v2/v3）：面板窗口在启动时已预建（主线程创建，避免后台线程建窗
 /// 导致 webview 加载失败显示"localhost 拒绝连接"），这里只定位并显示。
 pub fn open_panel(app: &AppHandle) {
@@ -301,6 +339,10 @@ pub fn run() {
             set_autostart,
             reset_position,
             open_settings,
+            open_wizard,
+            wizard_scan,
+            wizard_integrate,
+            wizard_restore,
             resolve_request,
             click_approve,
             get_pending
@@ -378,9 +420,10 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "显示宠物", true, None::<&str>)?;
     let demo = MenuItem::with_id(app, "demo", "演示动画", true, None::<&str>)?;
     let skin = MenuItem::with_id(app, "tray-skin", "切换皮肤", true, None::<&str>)?;
+    let wizard = MenuItem::with_id(app, "tray-wizard", "接入向导…", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "tray-settings", "设置…", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &demo, &skin, &settings, &quit])?;
+    let menu = Menu::with_items(app, &[&show, &demo, &skin, &wizard, &settings, &quit])?;
     TrayIconBuilder::with_id("main-tray")
         .icon(app.default_window_icon().expect("missing window icon").clone())
         .tooltip("Nekode")
@@ -392,6 +435,7 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
                 let _ = app.emit("pet-demo", ());
             }
             "tray-skin" => cycle_skin(app.clone()),
+            "tray-wizard" => open_wizard(app.clone()),
             "tray-settings" => open_settings(app.clone()),
             "quit" => app.exit(0),
             _ => {}
