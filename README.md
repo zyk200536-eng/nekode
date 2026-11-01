@@ -1,104 +1,104 @@
 # Nekode 🐾
 
-**一只桌宠，盯着你所有的 AI Agent 干活。**
+[![Release](https://img.shields.io/github/v/release/zyk200536-eng/nekode)](../../releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)](../../releases/latest)
+[![License](https://img.shields.io/github/license/zyk200536-eng/nekode)](LICENSE)
 
-Nekode 是一个桌面宠物程序：它常驻你的屏幕角落，通过各家 AI Agent 的钩子（Hook）机制实时获取任务状态——开始干活、正在做什么、等你确认、完成、出错——并用动画和气泡提示你。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-兼容 Claude Code 系、Codex、Hermes、Cursor 等主流 CLI Agent，一次配置，全家桶监控。
-
-> Nekode = **Neko**（猫）+ **Code**（代码）：一只能帮你盯着代码的猫。
-
-## 功能
-
-- 🐱 **状态动画 + 气泡提示**：待机 / 干活 / 等你确认 / 撒花 / 报错，五种状态自动切换
-- 🔌 **多 Agent 兼容**：基于钩子机制的统一事件桥，新增 Agent 只需一份配置模板
-- 🎨 **皮肤系统**：右键一键换肤；像素风、应用图标、任意尺寸精灵图都能当皮肤
-- 🫧 **零打扰设计**：气泡窗永久点击穿透，不挡桌面、不抢焦点
-- ⚙️ **设置面板**：皮肤选择、气泡时长、开机自启、位置重置
-- 🪄 **自动换肤**：单任务时自动切换成对应 agent 的皮肤，多任务并行保持小猫
-- 🪶 **轻量常驻**：Tauri 构建，安装包 ~1.6MB，后台内存占用几十 MB
-
-## 截图
+**A desktop pet that watches your AI coding agents work.**
 
 <p align="center">
-  <img src="docs/shot-working.png" width="300" alt="工作中：任务字幕与自动换肤" />
-  <img src="docs/shot-success.png" width="300" alt="任务完成" />
-  <img src="docs/shot-approve.png" width="300" alt="授权交互面板" />
+  <img src="docs/demo.gif" width="480" alt="Nekode demo: the cat reacts to agent events" />
 </p>
 
-## 支持的 AI Agent
+Nekode is a desktop pet that lives in a corner of your screen. It taps into the
+hook mechanisms of AI coding agents and turns their lifecycle events — task
+started, tool activity, waiting for your approval, done, error — into sprite
+animations and speech bubbles, so you always know what your agents are up to
+without staring at a terminal.
 
-| Agent | 接入方式 | 难度 |
+Works with Claude Code, Codex, Hermes, Cursor, ZCode, CodeBuddy and DeepSeek
+Harness. Set up once, and every agent is under one cat's watch.
+
+> Nekode = **Neko** (cat) + **Code**: the cat that watches your code.
+
+## Features
+
+- 🐱 **Status animations + speech bubbles** — idle / working / waiting / celebrating / error, switched automatically
+- 🔌 **Multi-agent** — a unified event bridge built on each agent's hook mechanism; adding a new agent is just one config template
+- 🎨 **Skin system** — switch skins from the tray menu; pixel art, app icons, any sprite sheet works as a skin
+- 🖱️ **Two-way interaction** — click the cat to approve a permission request; choice cards (`pet_ask`) let the agent ask you a question
+- 🪄 **Auto skin per agent** — while a single agent is active, the cat wears that agent's skin
+- 🫧 **Zero-distraction** — bubbles are permanently click-through; never blocks your desktop or steals focus
+- ⚙️ **Settings panel** — skin picker, bubble duration, auto-start, position reset
+- 🪶 **Lightweight** — built with Tauri 2, ~1.6 MB installer, tens of MB in memory
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/shot-working.png" width="300" alt="Working: task captions and auto skin switching" />
+  <img src="docs/shot-success.png" width="300" alt="Task done: confetti" />
+  <img src="docs/shot-approve.png" width="300" alt="Approval panel" />
+</p>
+
+## Supported agents
+
+| Agent | Integration | Effort |
 |---|---|---|
-| Claude Code / ZCode / CodeBuddy | 原生 hooks | ⭐ 一行配置 |
-| Codex CLI / 桌面版 | notify 配置（含转发器，不覆盖原通知） | ⭐⭐ |
-| Hermes Agent | config.yaml 钩子块 | ⭐ |
-| Cursor 等无钩子 Agent | MCP 工具软接入 | ⭐⭐ |
-| DeepSeek Harness | 会话记录自动监视，零配置 | ⭐ 自动 |
+| Claude Code / ZCode / CodeBuddy | native hooks | ⭐ one line |
+| Codex CLI / desktop | `notify` config (with a forwarder, keeps original notifications) | ⭐⭐ |
+| Hermes Agent | `config.yaml` hook block | ⭐ |
+| Cursor & hook-less agents | MCP tool (soft integration) | ⭐⭐ |
+| DeepSeek Harness | session-log watcher, zero config | ⭐ automatic |
 
-各 Agent 的完整接入配置见 **[integrations/README.md](integrations/README.md)**。
+Full per-agent setup: **[integrations/README.md](integrations/README.md)**.
 
-## 架构
+## How it works
 
 ```
-各家 Agent（每个只需一行钩子配置）
+AI agents (one line of hook config each)
    ↓  hooks / notify / MCP
-事件桥（本地 127.0.0.1 HTTP 服务，统一事件格式）
+Event bridge (local 127.0.0.1 HTTP service, unified event format)
    ↓  start / progress / waiting / done / error
-宠物本体（透明置顶小窗：状态动画 + 气泡）
+Pet (transparent always-on-top window: animations + bubbles)
 ```
 
-## 快速开始
+## Quick start
 
-### 安装（Windows）
+Download the latest installer from [Releases](../../releases/latest):
 
-从 [Releases](../../releases) 下载 `Nekode_x.y.z_x64-setup.exe` 安装运行即可。
-macOS 版由 GitHub Actions 自动构建（Release 附 dmg）。
+- **Windows**: `Nekode_x.y.z_x64-setup.exe`
+- **macOS**: `Nekode_x.y.z_universal.dmg` (built by GitHub Actions)
 
-### 源码构建
+Then wire up your agents — all config snippets are in
+[integrations/README.md](integrations/README.md).
 
-```bash
-npm install
-npm run tauri build
-# 产物：src-tauri/target/release/bundle/nsis/*.exe
-```
-
-依赖：Node 20+、Rust 1.77+、平台 WebView 运行时（Windows 自带 WebView2）。
-
-### 验证事件桥
-
-桌宠运行时：
+Verify the event bridge while the pet is running:
 
 ```bash
 curl "http://127.0.0.1:21435/e?agent=test&event=done&msg=hello"
 ```
 
-## 皮肤系统
+### Build from source
 
-`skins/<名字>/` 目录 = `manifest.json`（名称 + 帧尺寸）+ 五张状态精灵图（idle/working/waiting/success/error，横向排帧，帧数 = 图宽 ÷ 帧宽；manifest 标  即为高清原图直出模式，由渲染器自动选择采样方式）。
+```bash
+npm install
+npm run tauri build
+# Output: src-tauri/target/release/bundle/nsis/*.exe
+```
 
-- 内置皮肤：Nekode 原创像素团子
-- 把任意 PNG 图标像素化成皮肤的脚本：`node scripts/gen-skins.mjs`（源图放 `design/logos/`）
-- ⚠️ 各 AI Agent 的官方 Logo 属于其商标，**仅限本地自用，请勿随安装包分发或入库**
+Requires Node 20+, Rust 1.77+, and the platform WebView runtime (WebView2 ships with Windows).
 
-## 路线图
+## Skin system
 
-- [x] v1：状态动画 + 气泡 + 多 Agent 事件桥 + 皮肤 + 设置面板
-- [x] v2：点击宠物授权（MCP 工具 pet_request_approval：批准/拒绝/单击小猫）
-- [x] v3：询问选择交互（MCP 工具 pet_ask：桌宠弹选择题返回选项）
-- [ ] 更多原创皮肤 / 皮肤商店
+A skin lives in `skins/<name>/`: a `manifest.json` (name + frame size) plus five
+state sprite sheets (idle / working / waiting / success / error, frames laid out
+horizontally; frame count = image width ÷ frame width).
 
-## English
-
-Nekode is a desktop pet that watches your AI coding agents work. It receives
-lifecycle events (task started / tool activity / waiting for approval / done /
-error) from agents like Claude Code, Codex, Hermes, ZCode and CodeBuddy via
-their native hook mechanisms (plus an MCP server for agents without hooks),
-and renders them as sprite animations with speech bubbles on a
-click-through transparent window. Built with Tauri 2 — installer is ~1.6 MB.
-
-See [integrations/README.md](integrations/README.md) for per-agent setup, and
-the skin pack format above.
+- Built-in skin: the original Nekode pixel cat
+- Turn any PNG icon into a skin: `node scripts/gen-skins.mjs` (source images in `design/logos/`)
+- ⚠️ AI agent logos are their owners' trademarks — local personal use only, do not redistribute
 
 ## License
 

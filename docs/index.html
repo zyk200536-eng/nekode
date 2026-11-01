@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nekode — a desktop pet that watches your AI coding agents</title>
+<meta name="description" content="Nekode is a lightweight desktop pet that turns your AI coding agents' lifecycle events — working, waiting for approval, done, error — into pixel-cat animations and speech bubbles. Windows & macOS." />
+<link rel="icon" type="image/png" href="logo.png" />
+<style>
+  :root {
+    --bg: #16141f;
+    --panel: #1e1b2b;
+    --line: #2e2a3f;
+    --text: #e8e5f2;
+    --muted: #9b95b3;
+    --accent: #ffb454;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 24px 48px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  header img { width: 56px; height: 56px; image-rendering: pixelated; }
+  h1 { font-size: 28px; letter-spacing: 0.5px; }
+  h1 small { display: block; font-size: 15px; font-weight: 400; color: var(--muted); }
+  .demo {
+    margin: 32px 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    padding: 12px;
+    text-align: center;
+  }
+  .demo img { max-width: 100%; border-radius: 6px; }
+  .demo figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .pitch { margin: 28px 0 8px; font-size: 18px; }
+  .pitch strong { color: var(--accent); font-weight: 600; }
+  ul.points { list-style: none; margin: 18px 0 32px; color: var(--muted); }
+  ul.points li { padding: 3px 0; }
+  ul.points li::before { content: "▸ "; color: var(--accent); }
+  .buttons { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-block;
+    padding: 12px 26px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border: 1px solid var(--line);
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-2px); opacity: 0.92; }
+  .btn-win { background: #2d7ef7; border-color: #2d7ef7; color: #fff; }
+  .btn-mac { background: var(--panel); color: var(--text); }
+  .btn-src { font-weight: 400; color: var(--muted); padding: 12px 8px; }
+  footer {
+    margin-top: 44px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 14px;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.png" alt="Nekode logo" />
+    <h1>Nekode 🐾 <small>a desktop pet that watches your AI coding agents work</small></h1>
+  </header>
+
+  <figure class="demo">
+    <img src="demo.gif" alt="Nekode demo: the pixel cat reacts to agent events — working, waiting for approval, celebrating, error" />
+    <figcaption>start → progress → waiting → done → error，一只猫全知道 / one cat knows all five states</figcaption>
+  </figure>
+
+  <p class="pitch">
+    Your agents are running in terminals you're not watching. Nekode sits in the
+    corner of your screen and <strong>turns their lifecycle events into a pixel
+    cat</strong> — and when an agent needs your approval, <strong>click the cat</strong>.
+  </p>
+
+  <ul class="points">
+    <li>Works with Claude Code, Codex, Hermes, Cursor, ZCode, CodeBuddy, DeepSeek Harness — hooks / notify / MCP, one config each</li>
+    <li>Two-way: approve permission requests by clicking the cat; agents can ask you multiple-choice questions</li>
+    <li>Tauri 2, ~1.6 MB installer, permanently click-through bubbles — zero distraction</li>
+  </ul>
+
+  <div class="buttons">
+    <a class="btn btn-win" href="https://github.com/zyk200536-eng/nekode/releases/latest">⬇ Windows installer</a>
+    <a class="btn btn-mac" href="https://github.com/zyk200536-eng/nekode/releases/latest">⬇ macOS (universal)</a>
+    <a class="btn btn-src" href="https://github.com/zyk200536-eng/nekode">GitHub →</a>
+  </div>
+
+  <footer>
+    <span>MIT License</span>
+    <a href="https://github.com/zyk200536-eng/nekode/blob/main/integrations/README.md">Agent setup guide</a>
+    <a href="https://github.com/zyk200536-eng/nekode">Source on GitHub</a>
+    <a href="https://github.com/zyk200536-eng/nekode/blob/main/README.zh-CN.md">简体中文说明</a>
+  </footer>
+</div>
+</body>
+</html>
