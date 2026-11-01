@@ -232,6 +232,7 @@ fn serve(app: tauri::AppHandle, server: Server, state: Arc<SharedState>) {
 
         if let Some(e) = event {
             println!("[nekode] {} {}: {:?}", e.agent, e.event, e.msg);
+            crate::push::dispatch(&app, &e); // 手机推送（fire-and-forget，失败静默）
             let _ = app.emit("pet-event", e);
         }
     }

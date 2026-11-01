@@ -3,6 +3,7 @@ use bridge_server::SharedState;
 mod bridge_server;
 mod dsh_watcher;
 mod config;
+mod push;
 mod wizard;
 
 use tauri::menu::{Menu, MenuItem};
@@ -30,10 +31,13 @@ pub struct SkinInfo {
 #[tauri::command]
 fn get_state(state: tauri::State<'_, StateInfo>) -> serde_json::Value {
     let port = *state.port.lock().unwrap();
+    let cfgv = config::read_raw();
     serde_json::json!({
         "port": port,
         "bubbleSeconds": state.bubble_seconds,
-        "skin": config::Config::load().skin
+        "skin": config::Config::load().skin,
+        "pushChannel": cfgv.get("push_channel").and_then(|x| x.as_str()).unwrap_or(""),
+        "pushTarget": cfgv.get("push_target").and_then(|x| x.as_str()).unwrap_or(""),
     })
 }
 
@@ -127,9 +131,15 @@ fn apply_skin(app: &AppHandle, skin: SkinInfo) {
     let _ = app.emit("skin-changed", skin);
 }
 
-/// 设置面板写入：气泡时长 / 皮肤。
+/// 设置面板写入：气泡时长 / 皮肤 / 手机推送。
 #[tauri::command]
-fn set_config(app: AppHandle, bubble_seconds: Option<u64>, skin: Option<String>) {
+fn set_config(
+    app: AppHandle,
+    bubble_seconds: Option<u64>,
+    skin: Option<String>,
+    push_channel: Option<String>,
+    push_target: Option<String>,
+) {
     if let Some(bs) = bubble_seconds {
         config::update_config(|v| {
             v["bubble_seconds"] = serde_json::json!(bs);
@@ -142,6 +152,16 @@ fn set_config(app: AppHandle, bubble_seconds: Option<u64>, skin: Option<String>)
                 apply_skin(&app, s);
             }
         }
+    }
+    if let Some(ch) = push_channel {
+        config::update_config(|v| {
+            v["push_channel"] = serde_json::json!(ch);
+        });
+    }
+    if let Some(t) = push_target {
+        config::update_config(|v| {
+            v["push_target"] = serde_json::json!(t);
+        });
     }
 }
 
@@ -229,6 +249,14 @@ fn open_wizard(app: AppHandle) {
     .resizable(false)
     .center()
     .build();
+}
+
+// ---------- 手机推送 ----------
+
+/// 设置面板测试按钮：同步发送一条测试推送，成败回显 UI。
+#[tauri::command]
+fn push_test(channel: String, target: String) -> Result<(), String> {
+    push::send_test(&channel, &target)
 }
 
 // ---------- 一键接入向导 ----------
@@ -343,6 +371,7 @@ pub fn run() {
             wizard_scan,
             wizard_integrate,
             wizard_restore,
+            push_test,
             resolve_request,
             click_approve,
             get_pending

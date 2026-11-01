@@ -49,13 +49,18 @@ impl Config {
     }
 }
 
+/// 读取整个 config.json 为 Value（文件缺失/损坏返回空对象）。
+pub fn read_raw() -> serde_json::Value {
+    config_path()
+        .and_then(|p| fs::read_to_string(p).ok())
+        .and_then(|txt| serde_json::from_str(&txt).ok())
+        .unwrap_or_else(|| serde_json::json!({}))
+}
+
 /// 读-改-写 config.json（只动指定字段，其余保留）。
 pub fn update_config(f: impl FnOnce(&mut serde_json::Value)) {
     let Some(p) = config_path() else { return };
-    let mut v = fs::read_to_string(&p)
-        .ok()
-        .and_then(|txt| serde_json::from_str::<serde_json::Value>(&txt).ok())
-        .unwrap_or_else(|| serde_json::json!({}));
+    let mut v = read_raw();
     f(&mut v);
     if let Ok(txt) = serde_json::to_string_pretty(&v) {
         if let Some(dir) = p.parent() {

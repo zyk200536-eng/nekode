@@ -36,6 +36,7 @@ home = "0.5"
 zstd = "0.13"
 toml_edit = "0.22"
 serde_yaml = "0.9"
+ureq = { version = "2", features = ["json"] }
 
 [profile.release]
 opt-level = "s"

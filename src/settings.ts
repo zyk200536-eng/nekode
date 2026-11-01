@@ -6,6 +6,8 @@ interface State {
   port: number;
   bubbleSeconds: number;
   skin: string;
+  pushChannel: string;
+  pushTarget: string;
 }
 
 const root = document.getElementById("settings-root")!;
@@ -49,6 +51,29 @@ root.innerHTML = `
     </div>
   </section>
 
+  <section>
+    <h2>手机推送</h2>
+    <label class="row">
+      <span>通道</span>
+      <select id="push-channel">
+        <option value="">关闭</option>
+        <option value="ntfy">ntfy（安卓 / 网页）</option>
+        <option value="bark">Bark（iOS）</option>
+      </select>
+    </label>
+    <div class="row">
+      <span>目标</span>
+      <input id="push-target" type="text" placeholder="https://ntfy.sh/<topic> 或 Bark Key" />
+      <button id="gen-topic">随机</button>
+    </div>
+    <p class="push-tip">topic 就是密码：点「随机」用随机串，别用可猜的词；手机端订阅同一 topic 即可接收。</p>
+    <div class="row">
+      <span>测试</span>
+      <button id="push-test">发送测试推送</button>
+      <span id="push-status"></span>
+    </div>
+  </section>
+
   <p class="tip">接入各 AI Agent 的配置说明见项目 integrations/README.md</p>
 `;
 
@@ -57,6 +82,9 @@ const bubbleRange = root.querySelector("#bubble-range") as HTMLInputElement;
 const bubbleVal = root.querySelector("#bubble-val") as HTMLElement;
 const autostart = root.querySelector("#autostart") as HTMLInputElement;
 const portEl = root.querySelector("#port") as HTMLElement;
+const pushChannel = root.querySelector("#push-channel") as HTMLSelectElement;
+const pushTarget = root.querySelector("#push-target") as HTMLInputElement;
+const pushStatus = root.querySelector("#push-status") as HTMLElement;
 
 function renderSkins(skins: SkinInfo[], current: string): void {
   skinGrid.innerHTML = "";
@@ -91,6 +119,8 @@ function renderSkins(skins: SkinInfo[], current: string): void {
   portEl.textContent = String(state.port);
   bubbleRange.value = String(state.bubbleSeconds);
   bubbleVal.textContent = `${state.bubbleSeconds} 秒`;
+  pushChannel.value = state.pushChannel ?? "";
+  pushTarget.value = state.pushTarget ?? "";
   const skins = await invoke<SkinInfo[]>("list_skins").catch(() => []);
   renderSkins(skins, state.skin);
 
@@ -126,6 +156,38 @@ root.querySelector("#reset-pos")?.addEventListener("click", () => {
 
 root.querySelector("#open-wizard")?.addEventListener("click", () => {
   invoke("open_wizard").catch(() => {});
+});
+
+// ---------- 手机推送 ----------
+
+pushChannel.addEventListener("change", () => {
+  invoke("set_config", { pushChannel: pushChannel.value }).catch(() => {});
+});
+
+pushTarget.addEventListener("change", () => {
+  invoke("set_config", { pushTarget: pushTarget.value.trim() }).catch(() => {});
+});
+
+root.querySelector("#gen-topic")?.addEventListener("click", () => {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  const topic = [...bytes].map((b) => chars[b % chars.length]).join("");
+  pushTarget.value = topic;
+  pushTarget.placeholder = "https://ntfy.sh/" + topic;
+  invoke("set_config", { pushTarget: topic }).catch(() => {});
+});
+
+root.querySelector("#push-test")?.addEventListener("click", async (e) => {
+  const btn = e.target as HTMLButtonElement;
+  btn.disabled = true;
+  pushStatus.textContent = "发送中…";
+  try {
+    await invoke("push_test", { channel: pushChannel.value, target: pushTarget.value.trim() });
+    pushStatus.textContent = "✓ 已送达，看手机";
+  } catch (err) {
+    pushStatus.textContent = `✗ ${err}`;
+  }
+  btn.disabled = false;
 });
 
 listen<SkinInfo>("skin-changed", async (e) => {

@@ -150,6 +150,29 @@ body.win-settings {
   border-radius: 6px;
   padding: 2px 8px;
 }
+#settings-root input[type="text"],
+#settings-root select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #ffffff;
+  color: #2b2b3a;
+}
+#settings-root input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+.push-tip {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 2px 0 8px;
+}
+#push-status {
+  font-size: 11px;
+  color: #4b5563;
+  word-break: break-all;
+}
 #settings-root button {
   border: 1px solid #d1d5db;
   background: #ffffff;
